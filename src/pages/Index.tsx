@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import DisasterForm from "../components/DisasterForm";
@@ -99,10 +98,10 @@ const Index = () => {
       const { data, error } = await supabase
         .from('reports')
         .insert([{
-          disaster_id: parseInt(report.disasterId),
-          description: report.description,
+          disaster_id: report.disasterId, // This is already a string from the form
+          content: report.description,
           image_url: report.imageUrl,
-          verified: false
+          verification_status: 'pending'
         }])
         .select()
         .single();
