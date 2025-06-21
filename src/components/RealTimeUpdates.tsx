@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -13,12 +14,14 @@ const RealTimeUpdates = ({ reports, disasters }) => {
       ...reports.map(report => ({
         ...report,
         type: "report",
-        title: disasters.find(d => d.id === parseInt(report.disasterId))?.title || "Unknown Disaster"
+        title: disasters.find(d => d.id === report.disaster_id)?.title || "Unknown Disaster",
+        timestamp: report.created_at
       })),
       ...disasters.map(disaster => ({
         ...disaster,
         type: "disaster",
-        description: `New disaster event: ${disaster.description.substring(0, 100)}...`
+        description: `New disaster event: ${disaster.description.substring(0, 100)}...`,
+        timestamp: disaster.created_at
       }))
     ].sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
 

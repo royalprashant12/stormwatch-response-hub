@@ -9,7 +9,7 @@ const DisasterList = ({ disasters }) => {
   const [filter, setFilter] = useState("");
 
   const filteredDisasters = disasters.filter(disaster =>
-    disaster.tags.some(tag => 
+    disaster.tags?.some(tag => 
       tag.toLowerCase().includes(filter.toLowerCase())
     ) || disaster.title.toLowerCase().includes(filter.toLowerCase()) ||
     disaster.location.toLowerCase().includes(filter.toLowerCase())
@@ -63,7 +63,7 @@ const DisasterList = ({ disasters }) => {
                 <p className="text-sm text-gray-700 mb-3">{disaster.description}</p>
                 
                 <div className="flex flex-wrap gap-1 mb-2">
-                  {disaster.tags.map((tag, index) => (
+                  {disaster.tags?.map((tag, index) => (
                     <Badge key={index} variant="outline" className="text-xs">
                       {tag}
                     </Badge>
@@ -71,7 +71,7 @@ const DisasterList = ({ disasters }) => {
                 </div>
                 
                 <p className="text-xs text-gray-500">
-                  {formatDistanceToNow(new Date(disaster.timestamp))} ago
+                  {formatDistanceToNow(new Date(disaster.created_at))} ago
                 </p>
               </div>
             ))

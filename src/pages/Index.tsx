@@ -1,69 +1,135 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import DisasterForm from "../components/DisasterForm";
 import DisasterList from "../components/DisasterList";
 import ReportForm from "../components/ReportForm";
 import ResourceFinder from "../components/ResourceFinder";
 import RealTimeUpdates from "../components/RealTimeUpdates";
+import { useToast } from "@/hooks/use-toast";
 
 const Index = () => {
-  const [disasters, setDisasters] = useState([
-    {
-      id: 1,
-      title: "Hurricane Maria Aftermath",
-      location: "Puerto Rico",
-      description: "Category 4 hurricane causing widespread flooding and power outages across the island.",
-      tags: ["hurricane", "flooding", "power-outage"],
-      timestamp: "2024-06-20T10:30:00Z",
-      severity: "critical"
-    },
-    {
-      id: 2,
-      title: "Wildfire Emergency",
-      location: "Northern California",
-      description: "Fast-moving wildfire threatening residential areas and forcing evacuations.",
-      tags: ["wildfire", "evacuation", "air-quality"],
-      timestamp: "2024-06-20T08:15:00Z",
-      severity: "high"
-    }
-  ]);
+  const [disasters, setDisasters] = useState([]);
+  const [reports, setReports] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
 
-  const [reports, setReports] = useState([
-    {
-      id: 1,
-      disasterId: 1,
-      description: "Power lines down on Main Street, blocking traffic",
-      timestamp: "2024-06-20T11:45:00Z",
-      verified: true
-    },
-    {
-      id: 2,
-      disasterId: 1,
-      description: "Emergency shelter set up at Community Center",
-      timestamp: "2024-06-20T11:30:00Z",
-      verified: true
+  // Fetch disasters from Supabase
+  const fetchDisasters = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('disasters')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      setDisasters(data || []);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to load disasters",
+        variant: "destructive"
+      });
     }
-  ]);
-
-  const addDisaster = (disaster) => {
-    const newDisaster = {
-      ...disaster,
-      id: disasters.length + 1,
-      timestamp: new Date().toISOString(),
-      severity: "moderate"
-    };
-    setDisasters([newDisaster, ...disasters]);
   };
 
-  const addReport = (report) => {
-    const newReport = {
-      ...report,
-      id: reports.length + 1,
-      timestamp: new Date().toISOString(),
-      verified: false
-    };
-    setReports([newReport, ...reports]);
+  // Fetch reports from Supabase
+  const fetchReports = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('reports')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      setReports(data || []);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to load reports",
+        variant: "destructive"
+      });
+    }
   };
+
+  // Load data on component mount
+  useEffect(() => {
+    const loadData = async () => {
+      await Promise.all([fetchDisasters(), fetchReports()]);
+      setLoading(false);
+    };
+    loadData();
+  }, []);
+
+  // Add new disaster to Supabase
+  const addDisaster = async (disaster) => {
+    try {
+      const { data, error } = await supabase
+        .from('disasters')
+        .insert([{
+          title: disaster.title,
+          location: disaster.location,
+          description: disaster.description,
+          tags: disaster.tags,
+          severity: disaster.severity || 'moderate',
+          verified: false
+        }])
+        .select()
+        .single();
+
+      if (error) throw error;
+      
+      setDisasters(prev => [data, ...prev]);
+      toast({
+        title: "Success",
+        description: "Disaster created and saved to database",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to save disaster to database",
+        variant: "destructive"
+      });
+    }
+  };
+
+  // Add new report to Supabase
+  const addReport = async (report) => {
+    try {
+      const { data, error } = await supabase
+        .from('reports')
+        .insert([{
+          disaster_id: parseInt(report.disasterId),
+          description: report.description,
+          image_url: report.imageUrl,
+          verified: false
+        }])
+        .select()
+        .single();
+
+      if (error) throw error;
+      
+      setReports(prev => [data, ...prev]);
+      toast({
+        title: "Success",
+        description: "Report submitted and saved to database",
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to save report to database",
+        variant: "destructive"
+      });
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-xl">Loading disasters and reports...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
