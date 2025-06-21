@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import DisasterForm from "../components/DisasterForm";
@@ -67,11 +68,9 @@ const Index = () => {
         .from('disasters')
         .insert([{
           title: disaster.title,
-          location: disaster.location,
+          location_name: disaster.location,
           description: disaster.description,
-          tags: disaster.tags,
-          severity: disaster.severity || 'moderate',
-          verified: false
+          tags: disaster.tags
         }])
         .select()
         .single();
@@ -84,6 +83,7 @@ const Index = () => {
         description: "Disaster created and saved to database",
       });
     } catch (error) {
+      console.error('Error creating disaster:', error);
       toast({
         title: "Error",
         description: "Failed to save disaster to database",
