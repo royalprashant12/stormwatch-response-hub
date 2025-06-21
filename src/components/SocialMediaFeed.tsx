@@ -29,7 +29,8 @@ const SocialMediaFeed = () => {
   // Fetch social media posts
   const fetchPosts = async () => {
     try {
-      const { data, error } = await supabase
+      // Use any to bypass TypeScript issues until types are regenerated
+      const { data, error } = await (supabase as any)
         .from('social_media_posts')
         .select('*')
         .order('created_at', { ascending: false })
@@ -56,7 +57,7 @@ const SocialMediaFeed = () => {
       const location = await extractLocation(content);
       
       // Update the post with extracted location
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('social_media_posts')
         .update({ location_extracted: location })
         .eq('id', postId);
@@ -91,15 +92,15 @@ const SocialMediaFeed = () => {
     
     const mockPosts = [
       {
-        post: "#tsunamiwarning Coastal areas evacuating near Seattle",
-        user: "emergency_bot",
-        keywords: ["tsunami", "warning"],
+        post_content: "#tsunamiwarning Coastal areas evacuating near Seattle",
+        username: "emergency_bot",
+        disaster_keywords: ["tsunami", "warning"],
         platform: "mock"
       },
       {
-        post: "Landslide blocking highway 101 in California #landslide #emergency",
-        user: "traffic_alert",
-        keywords: ["landslide", "emergency"],
+        post_content: "Landslide blocking highway 101 in California #landslide #emergency",
+        username: "traffic_alert",
+        disaster_keywords: ["landslide", "emergency"],
         platform: "mock"
       }
     ];
@@ -107,13 +108,13 @@ const SocialMediaFeed = () => {
     // Insert mock data into database
     for (const mockPost of mockPosts) {
       try {
-        await supabase
+        await (supabase as any)
           .from('social_media_posts')
           .insert({
-            post_content: mockPost.post,
-            username: mockPost.user,
+            post_content: mockPost.post_content,
+            username: mockPost.username,
             platform: mockPost.platform,
-            disaster_keywords: mockPost.keywords
+            disaster_keywords: mockPost.disaster_keywords
           });
       } catch (error) {
         console.error('Error inserting mock post:', error);
@@ -190,7 +191,7 @@ const SocialMediaFeed = () => {
                   <p className="text-sm mb-3">{post.post_content}</p>
                   
                   <div className="flex flex-wrap gap-1 mb-2">
-                    {post.disaster_keywords.map((keyword, index) => (
+                    {post.disaster_keywords?.map((keyword, index) => (
                       <Badge key={index} variant="secondary" className="text-xs">
                         #{keyword}
                       </Badge>

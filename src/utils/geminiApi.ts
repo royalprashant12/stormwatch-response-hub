@@ -21,7 +21,8 @@ const getCacheKey = (type: string, input: string): string => {
 
 const getFromCache = async (cacheKey: string): Promise<string | null> => {
   try {
-    const { data, error } = await supabase
+    // Use any to bypass TypeScript issues until types are regenerated
+    const { data, error } = await (supabase as any)
       .from('api_cache')
       .select('response_data')
       .eq('cache_key', cacheKey)
@@ -41,7 +42,8 @@ const saveToCache = async (cacheKey: string, result: string, ttlHours: number = 
     const expiresAt = new Date();
     expiresAt.setHours(expiresAt.getHours() + ttlHours);
 
-    await supabase
+    // Use any to bypass TypeScript issues until types are regenerated
+    await (supabase as any)
       .from('api_cache')
       .upsert({
         cache_key: cacheKey,

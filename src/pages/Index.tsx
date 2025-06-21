@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import DisasterForm from "../components/DisasterForm";
@@ -54,7 +55,7 @@ const Index = () => {
   };
 
   // Add new disaster to Supabase
-  const addDisaster = async (disaster) => {
+  const addDisaster = async (disaster: any) => {
     try {
       const { data, error } = await supabase
         .from('disasters')
