@@ -2,7 +2,7 @@
 
 ## Project info
 
-**URL**: https://lovable.dev/projects/214e81c0-c417-41c1-80e2-752ae1a5d028
+**URL**: https://stormwatch-response-hub.lovable.app/
 
 ## How can I edit this code?
 
