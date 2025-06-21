@@ -9,6 +9,30 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      api_cache: {
+        Row: {
+          cache_key: string
+          created_at: string | null
+          expires_at: string
+          id: string
+          response_data: Json
+        }
+        Insert: {
+          cache_key: string
+          created_at?: string | null
+          expires_at: string
+          id?: string
+          response_data: Json
+        }
+        Update: {
+          cache_key?: string
+          created_at?: string | null
+          expires_at?: string
+          id?: string
+          response_data?: Json
+        }
+        Relationships: []
+      }
       cache: {
         Row: {
           expires_at: string | null
@@ -138,6 +162,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      social_media_posts: {
+        Row: {
+          created_at: string | null
+          disaster_keywords: string[] | null
+          id: string
+          location_extracted: string | null
+          platform: string | null
+          post_content: string
+          username: string
+          verified: boolean | null
+        }
+        Insert: {
+          created_at?: string | null
+          disaster_keywords?: string[] | null
+          id?: string
+          location_extracted?: string | null
+          platform?: string | null
+          post_content: string
+          username: string
+          verified?: boolean | null
+        }
+        Update: {
+          created_at?: string | null
+          disaster_keywords?: string[] | null
+          id?: string
+          location_extracted?: string | null
+          platform?: string | null
+          post_content?: string
+          username?: string
+          verified?: boolean | null
+        }
+        Relationships: []
       }
       spatial_ref_sys: {
         Row: {
