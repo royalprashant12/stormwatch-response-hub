@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import DisasterForm from "../components/DisasterForm";
@@ -6,6 +5,8 @@ import DisasterList from "../components/DisasterList";
 import ReportForm from "../components/ReportForm";
 import ResourceFinder from "../components/ResourceFinder";
 import RealTimeUpdates from "../components/RealTimeUpdates";
+import SocialMediaFeed from "../components/SocialMediaFeed";
+import EnhancedReportForm from "../components/EnhancedReportForm";
 import { useToast } from "@/hooks/use-toast";
 
 const Index = () => {
@@ -52,15 +53,6 @@ const Index = () => {
     }
   };
 
-  // Load data on component mount
-  useEffect(() => {
-    const loadData = async () => {
-      await Promise.all([fetchDisasters(), fetchReports()]);
-      setLoading(false);
-    };
-    loadData();
-  }, []);
-
   // Add new disaster to Supabase
   const addDisaster = async (disaster) => {
     try {
@@ -92,13 +84,13 @@ const Index = () => {
     }
   };
 
-  // Add new report to Supabase
-  const addReport = async (report) => {
+  // Add new enhanced report handler
+  const addEnhancedReport = async (report: any) => {
     try {
       const { data, error } = await supabase
         .from('reports')
         .insert([{
-          disaster_id: report.disasterId, // This is already a string from the form
+          disaster_id: report.disasterId,
           content: report.description,
           image_url: report.imageUrl,
           verification_status: 'pending'
@@ -111,16 +103,25 @@ const Index = () => {
       setReports(prev => [data, ...prev]);
       toast({
         title: "Success",
-        description: "Report submitted and saved to database",
+        description: "Enhanced report submitted and saved to database",
       });
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to save report to database",
+        description: "Failed to save enhanced report to database",
         variant: "destructive"
       });
     }
   };
+
+  // Load data on component mount
+  useEffect(() => {
+    const loadData = async () => {
+      await Promise.all([fetchDisasters(), fetchReports()]);
+      setLoading(false);
+    };
+    loadData();
+  }, []);
 
   if (loading) {
     return (
@@ -162,14 +163,19 @@ const Index = () => {
             <RealTimeUpdates reports={reports} disasters={disasters} />
           </div>
 
-          {/* Report Submission */}
+          {/* Enhanced Report Submission */}
           <div className="lg:col-span-1">
-            <ReportForm disasters={disasters} onSubmit={addReport} />
+            <EnhancedReportForm disasters={disasters} onSubmit={addEnhancedReport} />
           </div>
 
           {/* Resource Finder */}
           <div className="lg:col-span-1">
             <ResourceFinder disasters={disasters} />
+          </div>
+
+          {/* Social Media Feed */}
+          <div className="lg:col-span-1 xl:col-span-1">
+            <SocialMediaFeed />
           </div>
         </div>
       </main>
