@@ -2,7 +2,7 @@
 import { supabase } from '@/integrations/supabase/client';
 
 const GEMINI_API_KEY = 'AIzaSyBcPgnCna1r0rbgXcALdBrtAnTvT2nhOsw';
-const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent';
+const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent';
 
 interface GeminiResponse {
   candidates: Array<{
@@ -56,6 +56,8 @@ const saveToCache = async (cacheKey: string, result: string, ttlHours: number = 
 };
 
 const callGeminiAPI = async (prompt: string): Promise<string> => {
+  console.log('Calling Gemini API with prompt:', prompt);
+  
   const response = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
     method: 'POST',
     headers: {
@@ -70,16 +72,31 @@ const callGeminiAPI = async (prompt: string): Promise<string> => {
             }
           ]
         }
-      ]
+      ],
+      generationConfig: {
+        temperature: 0.1,
+        topK: 1,
+        topP: 1,
+        maxOutputTokens: 256,
+      }
     })
   });
 
+  console.log('Gemini API response status:', response.status);
+  
   if (!response.ok) {
-    throw new Error(`Gemini API error: ${response.statusText}`);
+    const errorText = await response.text();
+    console.error('Gemini API error response:', errorText);
+    throw new Error(`Gemini API error: ${response.status} - ${errorText}`);
   }
 
   const data: GeminiResponse = await response.json();
-  return data.candidates[0]?.content?.parts[0]?.text || '';
+  console.log('Gemini API response data:', data);
+  
+  const result = data.candidates[0]?.content?.parts[0]?.text || '';
+  console.log('Extracted text:', result);
+  
+  return result;
 };
 
 export const extractLocation = async (description: string): Promise<string> => {
@@ -87,7 +104,10 @@ export const extractLocation = async (description: string): Promise<string> => {
   
   // Check cache first
   const cached = await getFromCache(cacheKey);
-  if (cached) return cached;
+  if (cached) {
+    console.log('Found cached location:', cached);
+    return cached;
+  }
 
   try {
     const prompt = `Extract location from: ${description}. Return only the location name, nothing else. If no specific location is mentioned, return "Unknown".`;
