@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { extractLocation } from "@/utils/geminiApi";
 import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
+import { useTwitterData } from "@/hooks/useTwitterData";
 
 interface SocialPost {
   id: string;
@@ -21,15 +22,19 @@ interface SocialPost {
 }
 
 const SocialMediaFeed = () => {
-  const [posts, setPosts] = useState<SocialPost[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [dbPosts, setDbPosts] = useState<SocialPost[]>([]);
   const [extractingLocation, setExtractingLocation] = useState<string | null>(null);
   const { toast } = useToast();
+  const { posts: twitterPosts, loading: twitterLoading, fetchTwitterData } = useTwitterData();
 
-  // Fetch social media posts
-  const fetchPosts = async () => {
+  // Combine database posts and Twitter posts
+  const allPosts = [...twitterPosts, ...dbPosts].sort((a, b) => 
+    new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+  );
+
+  // Fetch posts from database
+  const fetchDbPosts = async () => {
     try {
-      // Use any to bypass TypeScript issues until types are regenerated
       const { data, error } = await (supabase as any)
         .from('social_media_posts')
         .select('*')
@@ -37,7 +42,7 @@ const SocialMediaFeed = () => {
         .limit(20);
 
       if (error) throw error;
-      setPosts(data || []);
+      setDbPosts(data || []);
     } catch (error) {
       console.error('Error fetching posts:', error);
       toast({
@@ -45,8 +50,6 @@ const SocialMediaFeed = () => {
         description: "Failed to load social media posts",
         variant: "destructive"
       });
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -65,7 +68,7 @@ const SocialMediaFeed = () => {
       if (error) throw error;
 
       // Update local state
-      setPosts(prev => prev.map(post => 
+      setDbPosts(prev => prev.map(post => 
         post.id === postId ? { ...post, location_extracted: location } : post
       ));
 
@@ -85,48 +88,8 @@ const SocialMediaFeed = () => {
     }
   };
 
-  // Mock endpoint for additional social media data
-  const fetchMockData = async () => {
-    // Simulate API call delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    const mockPosts = [
-      {
-        post_content: "#tsunamiwarning Coastal areas evacuating near Seattle",
-        username: "emergency_bot",
-        disaster_keywords: ["tsunami", "warning"],
-        platform: "mock"
-      },
-      {
-        post_content: "Landslide blocking highway 101 in California #landslide #emergency",
-        username: "traffic_alert",
-        disaster_keywords: ["landslide", "emergency"],
-        platform: "mock"
-      }
-    ];
-
-    // Insert mock data into database
-    for (const mockPost of mockPosts) {
-      try {
-        await (supabase as any)
-          .from('social_media_posts')
-          .insert({
-            post_content: mockPost.post_content,
-            username: mockPost.username,
-            platform: mockPost.platform,
-            disaster_keywords: mockPost.disaster_keywords
-          });
-      } catch (error) {
-        console.error('Error inserting mock post:', error);
-      }
-    }
-
-    // Refresh posts
-    fetchPosts();
-  };
-
   useEffect(() => {
-    fetchPosts();
+    fetchDbPosts();
   }, []);
 
   const getPlatformColor = (platform: string) => {
@@ -137,16 +100,6 @@ const SocialMediaFeed = () => {
     }
   };
 
-  if (loading) {
-    return (
-      <Card>
-        <CardContent className="p-6">
-          <div className="text-center">Loading social media feed...</div>
-        </CardContent>
-      </Card>
-    );
-  }
-
   return (
     <Card className="h-full">
       <CardHeader className="bg-purple-50">
@@ -154,19 +107,31 @@ const SocialMediaFeed = () => {
           📱 Social Media Feed
         </CardTitle>
         <CardDescription>
-          Real-time disaster-related posts from social platforms
+          Real-time disaster-related posts from Twitter and other platforms
         </CardDescription>
-        <Button onClick={fetchMockData} variant="outline" size="sm">
-          Load Mock Data
-        </Button>
+        <div className="flex gap-2">
+          <Button 
+            onClick={fetchTwitterData} 
+            disabled={twitterLoading}
+            variant="outline" 
+            size="sm"
+          >
+            {twitterLoading ? 'Fetching Twitter...' : 'Fetch Live Twitter Data'}
+          </Button>
+          <Button onClick={fetchDbPosts} variant="outline" size="sm">
+            Refresh
+          </Button>
+        </div>
       </CardHeader>
       <CardContent className="p-0">
         <ScrollArea className="h-96 p-6">
           <div className="space-y-4">
-            {posts.length === 0 ? (
-              <p className="text-gray-500 text-center py-8">No social media posts available.</p>
+            {allPosts.length === 0 ? (
+              <p className="text-gray-500 text-center py-8">
+                No social media posts available. Click "Fetch Live Twitter Data" to load real tweets.
+              </p>
             ) : (
-              posts.map((post) => (
+              allPosts.map((post) => (
                 <div
                   key={post.id}
                   className="border rounded-lg p-4 hover:shadow-md transition-shadow"
@@ -179,7 +144,7 @@ const SocialMediaFeed = () => {
                       </Badge>
                       {post.verified && (
                         <Badge variant="outline" className="bg-green-50 text-green-700">
-                          Verified
+                          ✓ Verified
                         </Badge>
                       )}
                     </div>
