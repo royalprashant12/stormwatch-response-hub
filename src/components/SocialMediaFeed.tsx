@@ -126,7 +126,14 @@ const SocialMediaFeed = () => {
       <CardContent className="p-0">
         <ScrollArea className="h-96 p-6">
           <div className="space-y-4">
-            {allPosts.length === 0 ? (
+            {twitterLoading && (
+              <div className="text-center py-4">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-600 mx-auto"></div>
+                <p className="text-gray-500 mt-2">Fetching live Twitter data...</p>
+              </div>
+            )}
+            
+            {allPosts.length === 0 && !twitterLoading ? (
               <p className="text-gray-500 text-center py-8">
                 No social media posts available. Click "Fetch Live Twitter Data" to load real tweets.
               </p>

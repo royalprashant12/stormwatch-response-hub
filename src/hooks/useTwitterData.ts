@@ -22,15 +22,24 @@ export const useTwitterData = () => {
   const fetchTwitterData = async () => {
     setLoading(true);
     try {
+      console.log("Invoking Twitter fetch function...");
+      
       const { data, error } = await supabase.functions.invoke('fetch-twitter-data', {
         body: {
           query: 'disaster OR earthquake OR flood OR hurricane OR wildfire OR emergency -RT'
         }
       });
 
-      if (error) throw error;
+      console.log("Function response:", { data, error });
+
+      if (error) {
+        console.error("Function invocation error:", error);
+        throw error;
+      }
 
       if (data?.tweets) {
+        console.log("Received tweets:", data.tweets);
+        
         // Save to database
         for (const tweet of data.tweets) {
           try {
@@ -56,12 +65,18 @@ export const useTwitterData = () => {
           title: "Success",
           description: `Fetched ${data.tweets.length} tweets from Twitter`,
         });
+      } else {
+        console.log("No tweets in response");
+        toast({
+          title: "No Data",
+          description: "No tweets found for the current search query",
+        });
       }
     } catch (error) {
       console.error('Error fetching Twitter data:', error);
       toast({
         title: "Error",
-        description: "Failed to fetch Twitter data. Using cached data.",
+        description: "Failed to fetch Twitter data. Please check your API keys.",
         variant: "destructive"
       });
     } finally {

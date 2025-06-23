@@ -72,6 +72,9 @@ async function searchTwitter(query: string): Promise<any> {
   const url = `${baseUrl}?${new URLSearchParams(queryParams).toString()}`;
   const oauthHeader = generateOAuthHeader("GET", baseUrl, queryParams);
 
+  console.log("Making request to Twitter API:", url);
+  console.log("OAuth Header:", oauthHeader);
+
   const response = await fetch(url, {
     method: "GET",
     headers: {
@@ -82,6 +85,7 @@ async function searchTwitter(query: string): Promise<any> {
 
   if (!response.ok) {
     const errorText = await response.text();
+    console.error(`Twitter API error: ${response.status} - ${errorText}`);
     throw new Error(`Twitter API error: ${response.status} - ${errorText}`);
   }
 
@@ -103,10 +107,12 @@ Deno.serve(async (req) => {
   try {
     validateEnvironmentVariables();
     
-    const { query = "disaster OR earthquake OR flood OR hurricane OR wildfire OR emergency" } = await req.json();
+    const { query = "disaster OR earthquake OR flood OR hurricane OR wildfire OR emergency -RT" } = await req.json();
     
     console.log("Searching Twitter for:", query);
     const tweets = await searchTwitter(query);
+    
+    console.log("Twitter API response:", tweets);
     
     // Transform Twitter data to our format
     const transformedTweets = tweets.statuses?.map((tweet: any) => ({
@@ -119,6 +125,8 @@ Deno.serve(async (req) => {
       created_at: new Date(tweet.created_at).toISOString(),
       verified: tweet.user.verified || false
     })) || [];
+
+    console.log("Transformed tweets:", transformedTweets);
 
     return new Response(JSON.stringify({ tweets: transformedTweets }), {
       headers: {
