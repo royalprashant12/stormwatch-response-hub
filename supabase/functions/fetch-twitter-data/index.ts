@@ -36,7 +36,7 @@ function generateOAuthSignature(
   const signingKey = `${encodeURIComponent(consumerSecret)}&`;
   
   console.log("Signature Base String:", signatureBaseString);
-  console.log("Signing Key:", signingKey);
+  console.log("Signing Key length:", signingKey.length);
   
   const hmacSha1 = createHmac("sha1", signingKey);
   const signature = hmacSha1.update(signatureBaseString).digest("base64");
@@ -88,6 +88,7 @@ async function searchTwitter(query: string): Promise<any> {
   const oauthHeader = generateOAuthHeader("GET", baseUrl, queryParams);
 
   console.log("Making request to Twitter API:", fullUrl);
+  console.log("Using API Key:", TWITTER_API_KEY?.substring(0, 10) + "...");
 
   try {
     const response = await fetch(fullUrl, {
@@ -141,6 +142,9 @@ Deno.serve(async (req) => {
 
   try {
     console.log("=== Twitter API Function Started ===");
+    console.log("Using API Key from env:", TWITTER_API_KEY?.substring(0, 10) + "...");
+    console.log("Using API Secret from env:", TWITTER_API_SECRET?.substring(0, 10) + "...");
+    
     validateEnvironmentVariables();
     
     const { query = "disaster OR earthquake OR flood OR hurricane OR wildfire OR emergency -RT" } = await req.json();
